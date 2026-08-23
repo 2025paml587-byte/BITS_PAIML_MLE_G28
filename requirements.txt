@@ -3,5 +3,6 @@ scikit-learn
 flask
 joblib
 python-docx
+kaggle
 
 print("Created requirements.txt")
