@@ -4,5 +4,6 @@ flask
 joblib
 python-docx
 kaggle
+dvc
 
 print("Created requirements.txt")
