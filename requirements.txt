@@ -5,6 +5,7 @@ joblib
 python-docx
 kaggle
 dvc
+dvc_gdrive
 matplotlib
 seaborn
 FastAPI
