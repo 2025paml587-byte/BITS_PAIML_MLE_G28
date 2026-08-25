@@ -1,4 +1,4 @@
-pandas
+pandas>=2.0,<3
 scikit-learn
 flask
 joblib
@@ -11,4 +11,4 @@ FastAPI
 MLFlow
 folium
 
-print("Created requirements.txt")
+
