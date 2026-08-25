@@ -5,5 +5,9 @@ joblib
 python-docx
 kaggle
 dvc
+matplotlib
+seaborn
+FastAPI
+MLFlow
 
 print("Created requirements.txt")
