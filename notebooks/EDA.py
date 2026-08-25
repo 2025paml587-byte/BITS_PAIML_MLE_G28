@@ -418,4 +418,47 @@ subprocess.run(
 
 print("\nAdded processed data files to DVC tracking successfully...")
 
+
+def publish_processed_data_to_git():
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    tracked_paths = [
+        "data/data_folder/train/processed/train_eda_processed.zip",
+        "data/data_folder/train/processed/train_eda_processed.zip.dvc",
+        "data/data_folder/test/processed/test_eda_processed.csv",
+        "data/data_folder/test/processed/test_eda_processed.csv.dvc",
+    ]
+
+    subprocess.run(
+        ["git", "add", "-f", "--", *tracked_paths],
+        cwd=repo_root,
+        check=True,
+    )
+
+    staged_changes = subprocess.run(
+        ["git", "diff", "--cached", "--quiet", "--", *tracked_paths],
+        cwd=repo_root,
+        check=False,
+    )
+    if staged_changes.returncode == 0:
+        print("No processed data changes to commit.")
+        return
+
+    subprocess.run(
+        ["git", "commit", "--only", "-m", "Update processed EDA data", "--", *tracked_paths],
+        cwd=repo_root,
+        check=True,
+    )
+    branch = subprocess.check_output(
+        ["git", "branch", "--show-current"],
+        cwd=repo_root,
+        text=True,
+    ).strip()
+    if not branch:
+        raise RuntimeError("Cannot push processed data from a detached HEAD.")
+    subprocess.run(["git", "push", "origin", branch], cwd=repo_root, check=True)
+    print(f"Processed data committed and pushed to origin/{branch}.")
+
+
+publish_processed_data_to_git()
+
 print("\nEDA and data preparation completed successfully.")
