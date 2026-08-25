@@ -415,3 +415,5 @@ subprocess.run(
     [dvc_executable, "status", "data/data_folder/test/processed/test_eda_processed.csv"],
     check=True,
 )
+
+print("\nAdded processed data files to DVC tracking successfully...")
