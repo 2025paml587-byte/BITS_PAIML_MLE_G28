@@ -417,3 +417,5 @@ subprocess.run(
 )
 
 print("\nAdded processed data files to DVC tracking successfully...")
+
+print("\nEDA and data preparation completed successfully.")
