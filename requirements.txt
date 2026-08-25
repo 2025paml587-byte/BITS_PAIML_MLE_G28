@@ -9,5 +9,6 @@ matplotlib
 seaborn
 FastAPI
 MLFlow
+folium
 
 print("Created requirements.txt")
