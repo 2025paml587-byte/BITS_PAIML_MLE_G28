@@ -13,5 +13,6 @@ FastAPI
 MLFlow
 folium
 PyYAML
+pytest
 
 

@@ -1,2 +1,7 @@
 # Generated data and model artifacts are tracked through DVC or regenerated locally.
 data/data_folder/train/processed/*.csv
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
