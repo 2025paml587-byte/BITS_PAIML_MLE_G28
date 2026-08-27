@@ -1,3 +1,2 @@
 # Generated data and model artifacts are tracked through DVC or regenerated locally.
 data/data_folder/train/processed/*.csv
-data/data_folder/train/processed/*.joblib
