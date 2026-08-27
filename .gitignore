@@ -5,3 +5,7 @@ data/data_folder/train/processed/*.csv
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# MLflow local tracking store (experiment history is local, not versioned).
+mlruns/
+mlartifacts/

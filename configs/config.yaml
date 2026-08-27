@@ -13,6 +13,10 @@ paths:
 dvc:
   remote: cloud
 
+mlflow:
+  tracking_uri: mlruns
+  experiment_name: trip-duration-prediction
+
 data:
   target_column: trip_duration
   id_column: id

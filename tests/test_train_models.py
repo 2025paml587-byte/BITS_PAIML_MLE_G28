@@ -27,7 +27,9 @@ def make_training_df(n_rows: int = 40, seed: int = 0) -> pd.DataFrame:
 def test_train_linear_regression_fits_and_saves_model(tmp_path):
     model_path = tmp_path / "linear_regression.joblib"
 
-    model = train_linear_regression(train_df=make_training_df(), model_path=model_path)
+    model = train_linear_regression(
+        train_df=make_training_df(), model_path=model_path, log_to_mlflow=False
+    )
 
     assert model_path.exists()
     prediction = model.predict(make_training_df(n_rows=3, seed=1).drop(columns=["trip_duration"]))
@@ -37,7 +39,9 @@ def test_train_linear_regression_fits_and_saves_model(tmp_path):
 def test_train_gradient_boosting_fits_and_saves_model(tmp_path):
     model_path = tmp_path / "gradient_boosting.joblib"
 
-    model = train_gradient_boosting(train_df=make_training_df(), model_path=model_path)
+    model = train_gradient_boosting(
+        train_df=make_training_df(), model_path=model_path, log_to_mlflow=False
+    )
 
     assert model_path.exists()
     prediction = model.predict(make_training_df(n_rows=3, seed=1).drop(columns=["trip_duration"]))

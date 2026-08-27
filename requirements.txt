@@ -11,7 +11,7 @@ matplotlib
 seaborn
 FastAPI
 uvicorn
-MLFlow
+mlflow-skinny
 folium
 PyYAML
 pytest

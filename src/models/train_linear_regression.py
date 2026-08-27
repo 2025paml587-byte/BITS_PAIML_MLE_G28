@@ -1,10 +1,13 @@
 """Train a linear regression baseline for trip duration prediction.
 
-Replaces notebooks/linearRegressionmodel.py.
+Replaces notebooks/linearRegressionmodel.py. Optionally logs the run
+(params, metrics, model) to MLflow.
 """
 
 from pathlib import Path
 
+import mlflow
+import mlflow.sklearn
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
@@ -19,11 +22,14 @@ from src.models.common import (
     save_model,
     split_features_target,
 )
+from src.models.tracking import start_run_if_enabled
 
 
 def train_model(
     train_df: pd.DataFrame | None = None,
     model_path: Path | None = None,
+    log_to_mlflow: bool = True,
+    tracking_uri: str | None = None,
 ) -> Pipeline:
     if train_df is None:
         print("Loading processed training data...")
@@ -42,9 +48,19 @@ def train_model(
     )
 
     print("Training linear regression model...")
-    model.fit(X_train, y_train)
-    metrics = evaluate_regression(y_test, model.predict(X_test))
-    print(f"Training metrics: {format_metrics(metrics)}")
+    with start_run_if_enabled("linear_regression", log_to_mlflow, tracking_uri) as run:
+        if run is not None:
+            mlflow.log_params({"test_size": TEST_SIZE, "random_state": RANDOM_STATE})
+
+        model.fit(X_train, y_train)
+        metrics = evaluate_regression(y_test, model.predict(X_test))
+        print(f"Training metrics: {format_metrics(metrics)}")
+
+        if run is not None:
+            mlflow.log_metrics(metrics)
+            mlflow.sklearn.log_model(
+                model, name="model", serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_PICKLE
+            )
 
     model_path = model_path or MODELS_DIR / LINEAR_REGRESSION["model_filename"]
     save_model(model, model_path)

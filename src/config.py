@@ -19,6 +19,7 @@ _paths = _config["paths"]
 _data = _config["data"]
 _training = _config["training"]
 _serving = _config["serving"]
+_mlflow = _config["mlflow"]
 
 # --- Paths -------------------------------------------------------------
 TRAIN_RAW_PATH = PROJECT_ROOT / _paths["train_raw"]
@@ -46,3 +47,7 @@ GRADIENT_BOOSTING = _training["gradient_boosting"]
 # --- Serving ---------------------------------------------------------------
 DEFAULT_SERVING_MODEL = _serving["default_model"]
 SERVING_MODELS = {name: PROJECT_ROOT / path for name, path in _serving["models"].items()}
+
+# --- MLflow ------------------------------------------------------------------
+MLFLOW_TRACKING_URI = str(PROJECT_ROOT / _mlflow["tracking_uri"])
+MLFLOW_EXPERIMENT_NAME = _mlflow["experiment_name"]
