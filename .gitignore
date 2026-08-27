@@ -11,3 +11,6 @@ mlruns/
 mlartifacts/
 
 .venv
+
+# Editor
+.vscode/
