@@ -113,7 +113,5 @@ def train_model(n_estimators: int = 300, progress_every: int = 25):
 	joblib.dump(model, MODEL_PATH)
 	print("Model saved successfully.")
 	return model
-
-
 if __name__ == "__main__":
 	train_model()
