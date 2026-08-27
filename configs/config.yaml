@@ -26,6 +26,12 @@ data:
     - pickup_datetime
     - dropoff_datetime
 
+serving:
+  default_model: gradient_boosting
+  models:
+    gradient_boosting: models/gradient_boosting_trip_duration.joblib
+    linear_regression: data/data_folder/train/processed/duration_linear_regression.joblib
+
 training:
   test_size: 0.2
   random_state: 42

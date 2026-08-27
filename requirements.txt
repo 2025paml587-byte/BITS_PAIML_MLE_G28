@@ -10,9 +10,11 @@ dvc_gdrive
 matplotlib
 seaborn
 FastAPI
+uvicorn
 MLFlow
 folium
 PyYAML
 pytest
+httpx
 
 

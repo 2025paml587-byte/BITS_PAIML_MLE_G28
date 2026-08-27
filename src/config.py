@@ -18,6 +18,7 @@ with open(CONFIG_PATH, "r") as _f:
 _paths = _config["paths"]
 _data = _config["data"]
 _training = _config["training"]
+_serving = _config["serving"]
 
 # --- Paths -------------------------------------------------------------
 TRAIN_RAW_PATH = PROJECT_ROOT / _paths["train_raw"]
@@ -41,3 +42,7 @@ TEST_SIZE = _training["test_size"]
 RANDOM_STATE = _training["random_state"]
 LINEAR_REGRESSION = _training["linear_regression"]
 GRADIENT_BOOSTING = _training["gradient_boosting"]
+
+# --- Serving ---------------------------------------------------------------
+DEFAULT_SERVING_MODEL = _serving["default_model"]
+SERVING_MODELS = {name: PROJECT_ROOT / path for name, path in _serving["models"].items()}
