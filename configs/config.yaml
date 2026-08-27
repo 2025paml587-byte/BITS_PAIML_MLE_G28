@@ -1,0 +1,42 @@
+# Central configuration for the NYC taxi trip-duration pipeline.
+# All paths are relative to the project root and are resolved there
+# by src/config.py, so this file works the same on any machine.
+
+paths:
+  train_raw: data/data_folder/train/raw/train.zip
+  test_raw: data/data_folder/test/raw/test.csv
+  train_processed: data/data_folder/train/processed/train_eda_processed.zip
+  test_processed: data/data_folder/test/processed/test_eda_processed.csv
+  eda_output_dir: docs/EDA_chart_outputs
+  models_dir: models
+
+dvc:
+  remote: cloud
+
+data:
+  target_column: trip_duration
+  id_column: id
+  datetime_columns:
+    - pickup_datetime
+    - dropoff_datetime
+  # Columns dropped from the feature matrix before training (not predictive
+  # or not available at inference time).
+  drop_columns_for_training:
+    - id
+    - pickup_datetime
+    - dropoff_datetime
+
+training:
+  test_size: 0.2
+  random_state: 42
+
+  linear_regression:
+    model_filename: linear_regression_trip_duration.joblib
+
+  gradient_boosting:
+    model_filename: gradient_boosting_trip_duration.joblib
+    n_estimators: 300
+    learning_rate: 0.05
+    max_depth: 4
+    loss: huber
+    progress_every: 25

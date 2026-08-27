@@ -1,4 +1,5 @@
 pandas>=2.0,<3
+numpy
 scikit-learn
 flask
 joblib
@@ -11,5 +12,6 @@ seaborn
 FastAPI
 MLFlow
 folium
+PyYAML
 
 
