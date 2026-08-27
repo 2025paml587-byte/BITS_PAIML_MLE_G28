@@ -22,6 +22,14 @@ def setup_function():
     clear_model_cache()
 
 
+def test_ui_page_is_served_at_root():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "<form" in response.text
+    assert "/predict" in response.text
+
+
 def test_health():
     response = client.get("/health")
     assert response.status_code == 200
