@@ -1,1 +1,16 @@
-data/data_folder/train/train.csv
+# Generated data and model artifacts are tracked through DVC or regenerated locally.
+data/data_folder/train/processed/*.csv
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# MLflow local tracking store (experiment history is local, not versioned).
+mlruns/
+mlartifacts/
+
+.venv
+
+# Editor
+.vscode/

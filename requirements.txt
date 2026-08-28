@@ -1,4 +1,5 @@
-pandas
+pandas>=2.0,<3
+numpy
 scikit-learn
 flask
 joblib
@@ -9,5 +10,9 @@ dvc-gdrive
 matplotlib
 seaborn
 FastAPI
-MLFlow
+uvicorn
+mlflow-skinny
 folium
+PyYAML
+pytest
+httpx
