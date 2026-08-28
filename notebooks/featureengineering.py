@@ -400,6 +400,26 @@ def generate_feature_engineering_charts(dataframe, output_dir):
 		plt.close(figure)
 
 
+def track_cleaned_files_with_dvc(project_root, cleaned_paths):
+	"""Create or refresh DVC pointers for generated cleaned datasets."""
+	dvc_executable = shutil.which("dvc")
+	if dvc_executable is None:
+		venv_dvc = os.path.join(os.path.dirname(sys.executable), "dvc.exe")
+		dvc_executable = venv_dvc if os.path.isfile(venv_dvc) else None
+	if dvc_executable is None:
+		raise RuntimeError(
+			"DVC is not available. Install it with 'python -m pip install dvc' "
+			"before running feature engineering."
+		)
+
+	subprocess.run(
+		[dvc_executable, "add", *cleaned_paths],
+		cwd=project_root,
+		check=True,
+	)
+	print("Cleaned datasets tracked with DVC.")
+
+
 def main():
 	project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 	train_input_path = os.path.join(
@@ -444,6 +464,13 @@ def main():
 	print("Generating feature engineering charts...")
 	chart_sample = next(pd.read_csv(train_output_path, chunksize=100_000))
 	generate_feature_engineering_charts(chart_sample, chart_output_dir)
+	track_cleaned_files_with_dvc(
+		project_root,
+		[
+			os.path.relpath(train_output_path, project_root),
+			os.path.relpath(test_output_path, project_root),
+		],
+	)
 	print("Feature engineering completed and processed datasets saved successfully.")
 
 
