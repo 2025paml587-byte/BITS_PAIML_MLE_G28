@@ -5,11 +5,9 @@ joblib
 python-docx
 kaggle
 dvc
-dvc_gdrive
+dvc-gdrive
 matplotlib
 seaborn
 FastAPI
 MLFlow
 folium
-
-print("Created requirements.txt")
