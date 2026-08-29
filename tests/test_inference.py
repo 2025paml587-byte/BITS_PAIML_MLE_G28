@@ -1,4 +1,4 @@
-from src.api.inference import build_feature_row
+from src.api.inference import build_feature_row, clear_high_traffic_zones_cache
 from src.api.schemas import TripRequest
 
 SAMPLE_TRIP = {
@@ -13,6 +13,10 @@ SAMPLE_TRIP = {
 }
 
 
+def setup_function():
+    clear_high_traffic_zones_cache()
+
+
 def test_build_feature_row_produces_expected_columns():
     request = TripRequest(**SAMPLE_TRIP)
     row = build_feature_row(request)
@@ -22,8 +26,6 @@ def test_build_feature_row_produces_expected_columns():
         "passenger_count",
         "pickup_longitude",
         "pickup_latitude",
-        "dropoff_longitude",
-        "dropoff_latitude",
         "store_and_fwd_flag",
         "haversine_distance",
         "pickup_hour",
@@ -31,15 +33,38 @@ def test_build_feature_row_produces_expected_columns():
         "pickup_month",
         "pickup_day",
         "pickup_quarter",
+        "pickup_season",
+        "pickup_day_of_year",
+        "pickup_week_of_year",
+        "pickup_is_holiday",
+        "pickup_part_of_day",
+        "manhattan_distance",
+        "bearing",
+        "pickup_zone",
+        "route_zone",
+        "same_zone",
+        "pickup_high_traffic",
+        "high_traffic_route",
+        "distance_hour_interaction",
+        "day_of_week_holiday_interaction",
     }
     assert expected_columns.issubset(set(row.columns))
     assert len(row) == 1
+
+
+def test_build_feature_row_drops_dropoff_coordinates():
+    # The cleaned schema drops raw dropoff_* columns in favor of the
+    # derived route/zone features - the served models don't expect them.
+    request = TripRequest(**SAMPLE_TRIP)
+    row = build_feature_row(request)
+    assert [c for c in row.columns if c.startswith("dropoff_")] == []
 
 
 def test_build_feature_row_computes_positive_distance():
     request = TripRequest(**SAMPLE_TRIP)
     row = build_feature_row(request)
     assert row.loc[0, "haversine_distance"] > 0
+    assert row.loc[0, "manhattan_distance"] > 0
 
 
 def test_build_feature_row_extracts_temporal_parts():
@@ -47,3 +72,4 @@ def test_build_feature_row_extracts_temporal_parts():
     row = build_feature_row(request)
     assert row.loc[0, "pickup_hour"] == 9
     assert row.loc[0, "pickup_month"] == 3
+    assert row.loc[0, "pickup_season"] == "spring"
