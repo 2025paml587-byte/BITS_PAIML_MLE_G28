@@ -12,6 +12,7 @@ This project aims to build an end-to-end Machine Learning pipeline for predictin
 - [Project Structure](#project-structure)
 - [Project Workflow](#project-workflow)
 - [Dataset & Features](#dataset--features)
+- [Data Download](#data-download)
 - [Configuration](#configuration)
 - [Running the API](#running-the-api)
 - [API Endpoints](#api-endpoints)
@@ -414,15 +415,25 @@ dvc status
 - Feature engineering charts: Check `docs/feature_engg_chart_outputs/`
 - Experiment tracking: Run `mlflow ui` to view all experiments
 
+## Data Download
+
+The dataset is stored on Google Drive and can be accessed using DVC (recommended) or downloaded directly.
+
+### Google Drive Link
+**Direct Download:** [NYC Taxi Data on Google Drive](https://drive.google.com/drive/folders/1C9CN2xgSkCYEk_8p-0IWYyDmncjTAjmH?usp=sharing)
+
+> **Note:** You may need to request access to the folder. Contact the project owner if you don't have access.
+
 ## DVC Data Setup for Team Members
 
 The data files are stored in the shared Google Drive DVC remote configured in
 `.dvc/config`; they are not downloaded by `git clone` or `git pull`.
 
-### Steps:
+### Recommended Method: Using DVC (Automatic)
+
+**Steps:**
 1. Install the dependencies from `requirements.txt`.
-2. Ask the remote owner to share the configured Google Drive folder with the
-	Google account you will use for DVC.
+2. Ensure the remote owner has shared the Google Drive folder with your Google account used for DVC.
 3. From the repository root, run:
 
 	```bash
@@ -435,3 +446,34 @@ The data files are stored in the shared Google Drive DVC remote configured in
 If `dvc pull` reports that the remote cannot be accessed, verify the signed-in
 Google account has access to the Drive folder and run `dvc pull` again. Do not
 commit `.dvc/config.local` or OAuth credential files.
+
+### Alternative Method: Manual Download
+
+If you prefer to download the data manually:
+
+1. Access the Google Drive folder: [NYC Taxi Data](https://drive.google.com/drive/folders/1C9CN2xgSkCYEk_8p-0IWYyDmncjTAjmH?usp=sharing)
+2. Download the required data files
+3. Extract files to `data/data_folder/` directory structure:
+   ```
+   data/
+   └── data_folder/
+       ├── train/
+       │   ├── raw/
+       │   │   └── train.zip
+       │   └── processed/
+       │       ├── train_eda_processed.zip
+       │       └── train_cleaned.zip
+       └── test/
+           ├── raw/
+           │   └── test.csv
+           └── processed/
+               ├── test_eda_processed.csv
+               └── test_cleaned.csv
+   ```
+4. No need to run `dvc pull` if files are already present locally
+
+**Advantages of DVC method:**
+- Automatic version control and tracking
+- Ensures data consistency across team
+- Easy updates when data is refreshed
+- Reproducible data pipelines
