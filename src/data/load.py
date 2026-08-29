@@ -1,10 +1,11 @@
 """Load train/test data, pulling from the DVC remote if not present
 locally.
 
-Replaces notebooks/ExtractData_Using_DVC.py. Works for both the raw
-files (train.zip/test.csv) and the EDA-processed files
-(train_eda_processed.zip/test_eda_processed.csv), since both are
-DVC-tracked CSV-or-single-CSV-ZIP files.
+Replaces notebooks/ExtractData_Using_DVC.py. Works for the raw files
+(train.zip/test.csv), the EDA-processed files
+(train_eda_processed.zip/test_eda_processed.csv), and the cleaned/
+feature-engineered files (train_cleaned.zip/test_cleaned.csv), since
+all of them are DVC-tracked CSV-or-single-CSV-ZIP files.
 """
 
 import subprocess
@@ -12,11 +13,14 @@ import zipfile
 from pathlib import Path
 
 import pandas as pd
+import yaml
 
 from src.config import (
     PROJECT_ROOT,
+    TEST_CLEANED_PATH,
     TEST_PROCESSED_PATH,
     TEST_RAW_PATH,
+    TRAIN_CLEANED_PATH,
     TRAIN_PROCESSED_PATH,
     TRAIN_RAW_PATH,
 )
@@ -65,6 +69,27 @@ def load_processed_train_test() -> tuple[pd.DataFrame, pd.DataFrame]:
         load_dvc_tracked_csv(TRAIN_PROCESSED_PATH),
         load_dvc_tracked_csv(TEST_PROCESSED_PATH),
     )
+
+
+def load_cleaned_train_test() -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load the feature-engineered ("cleaned") train and test sets."""
+    return (
+        load_dvc_tracked_csv(TRAIN_CLEANED_PATH),
+        load_dvc_tracked_csv(TEST_CLEANED_PATH),
+    )
+
+
+def read_dvc_md5(tracked_path: Path) -> str | None:
+    """Read the content hash DVC recorded for tracked_path, or None if
+    there's no .dvc pointer for it. Used to stamp exactly which data
+    version fed a given model/experiment run."""
+    dvc_file = Path(f"{tracked_path}.dvc")
+    if not dvc_file.exists():
+        return None
+    with open(dvc_file, "r") as f:
+        meta = yaml.safe_load(f)
+    outs = meta.get("outs") or []
+    return outs[0].get("md5") if outs else None
 
 
 if __name__ == "__main__":

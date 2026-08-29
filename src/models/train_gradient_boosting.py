@@ -4,6 +4,10 @@ Replaces notebooks/gradientBoosting.py. Trains incrementally via
 warm_start so progress (MAE/RMSE/R2) is logged every `progress_every`
 trees, exactly like the original script. Optionally logs params, the
 per-stage progress curve, and the final model to MLflow.
+
+Trains on the cleaned/feature-engineered dataset (src.features.cleaned_features
+via src.features.cleaning_pipeline), not the older EDA-processed one -
+see src.data.load.load_processed_train_test for that schema instead.
 """
 
 from pathlib import Path
@@ -16,8 +20,8 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 
-from src.config import GRADIENT_BOOSTING, MODELS_DIR, RANDOM_STATE, TEST_SIZE
-from src.data.load import load_processed_train_test
+from src.config import GRADIENT_BOOSTING, MODELS_DIR, RANDOM_STATE, TEST_SIZE, TRAIN_CLEANED_PATH
+from src.data.load import load_cleaned_train_test
 from src.models.common import (
     build_preprocessor,
     evaluate_regression,
@@ -25,7 +29,7 @@ from src.models.common import (
     save_model,
     split_features_target,
 )
-from src.models.tracking import start_run_if_enabled
+from src.models.tracking import log_dataset_tags, start_run_if_enabled
 
 
 def train_model(
@@ -35,8 +39,8 @@ def train_model(
     tracking_uri: str | None = None,
 ) -> Pipeline:
     if train_df is None:
-        print("Loading processed training data...")
-        train_df, _ = load_processed_train_test()
+        print("Loading cleaned training data...")
+        train_df, _ = load_cleaned_train_test()
     train_df = train_df.replace([np.inf, -np.inf], np.nan)
 
     X, y = split_features_target(train_df)
@@ -74,6 +78,7 @@ def train_model(
                     "random_state": RANDOM_STATE,
                 }
             )
+            log_dataset_tags("cleaned", TRAIN_CLEANED_PATH)
 
         print("Starting model training...")
         for stage in range(progress_every, final_stage + 1, progress_every):

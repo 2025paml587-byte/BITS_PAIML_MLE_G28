@@ -7,7 +7,11 @@ paths:
   test_raw: data/data_folder/test/raw/test.csv
   train_processed: data/data_folder/train/processed/train_eda_processed.zip
   test_processed: data/data_folder/test/processed/test_eda_processed.csv
+  train_cleaned: data/data_folder/train/processed/train_cleaned.zip
+  test_cleaned: data/data_folder/test/processed/test_cleaned.csv
   eda_output_dir: docs/EDA_chart_outputs
+  feature_engineering_output_dir: docs/feature_engg_chart_outputs
+  external_data_dir: data/data_folder/external
   models_dir: models
 
 dvc:
