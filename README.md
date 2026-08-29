@@ -18,6 +18,7 @@ This project aims to build an end-to-end Machine Learning pipeline for predictin
 - [Data Download](#data-download)
 - [Configuration](#configuration)
 - [Running the API](#running-the-api)
+- [Docker Deployment](#docker-deployment)
 - [API Endpoints](#api-endpoints)
 - [Testing](#testing)
 - [MLflow Integration](#mlflow-integration)
@@ -265,6 +266,68 @@ uvicorn src.api.app:app --reload
 - **UI:** Open http://127.0.0.1:8000/ in your browser
 - **API Docs:** http://127.0.0.1:8000/docs (Swagger UI)
 - **Alternative Docs:** http://127.0.0.1:8000/redoc (ReDoc)
+
+## Docker Deployment
+
+The prediction API (FastAPI + UI) can be packaged as a single, self-contained
+Docker image with the two pre-trained models baked in - no DVC, MLflow, or
+Python setup needed to run it. This is the easiest way to hand someone (e.g.
+an invigilator) a working demo without sharing the whole repo or having them
+install anything beyond Docker itself.
+
+The image is built from `Dockerfile` at the repo root (multi-stage: deps are
+installed in a builder stage, the final image is `python:3.12-slim`, runs as
+a non-root user, and only contains `src/`, `configs/`, and `models/*.joblib`
+- no raw/processed data, no notebooks, no `.git`). Built size is ~165 MB.
+
+### Build
+
+```bash
+docker build -t trip-duration-api .
+```
+
+### Run
+
+```bash
+docker run -p 8000:8000 trip-duration-api
+```
+
+Then open:
+- **UI:** http://127.0.0.1:8000/
+- **Swagger docs:** http://127.0.0.1:8000/docs
+- **Health check:** http://127.0.0.1:8000/health
+
+### Sharing the image
+
+**Option A - via a container registry (recommended):** push once, anyone can pull.
+
+```bash
+docker tag trip-duration-api <your-dockerhub-username>/trip-duration-api:latest
+docker push <your-dockerhub-username>/trip-duration-api:latest
+```
+
+The recipient then just needs:
+
+```bash
+docker pull <your-dockerhub-username>/trip-duration-api:latest
+docker run -p 8000:8000 <your-dockerhub-username>/trip-duration-api:latest
+```
+
+**Option B - as a portable file (no registry account needed):**
+
+```bash
+docker save -o trip-duration-api.tar trip-duration-api
+```
+
+The resulting `trip-duration-api.tar` (~156 MB) is git-ignored and must be
+shared separately (e.g. Google Drive) - GitHub rejects files over 100 MB, so
+it cannot be committed to this repo. Share it directly (drive/email/USB). The
+recipient loads and runs it with:
+
+```bash
+docker load -i trip-duration-api.tar
+docker run -p 8000:8000 trip-duration-api
+```
 
 ## API Endpoints
 

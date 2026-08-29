@@ -1,0 +1,17 @@
+.git
+.venv
+venv
+__pycache__/
+*.pyc
+.pytest_cache/
+mlruns/
+mlartifacts/
+data/
+docs/
+notebooks/
+tests/
+*.md
+.vscode/
+.idea/
+Dockerfile
+.dockerignore
