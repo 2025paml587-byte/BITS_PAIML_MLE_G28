@@ -1996,5 +1996,5 @@ src.features.cleaning_pipeline
 
 ---
 
-For detailed documentation, see `docs/Project Documentation_v0_G28.docx`
+For detailed documentation, see `docs/Project Documentation_G28.docx`
 
