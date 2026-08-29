@@ -319,8 +319,10 @@ docker run -p 8000:8000 <your-dockerhub-username>/trip-duration-api:latest
 docker save -o trip-duration-api.tar trip-duration-api
 ```
 
-Share `trip-duration-api.tar` directly (drive/email/USB). The recipient loads
-and runs it with:
+The resulting `trip-duration-api.tar` (~156 MB) is git-ignored and must be
+shared separately (e.g. Google Drive) - GitHub rejects files over 100 MB, so
+it cannot be committed to this repo. Share it directly (drive/email/USB). The
+recipient loads and runs it with:
 
 ```bash
 docker load -i trip-duration-api.tar
