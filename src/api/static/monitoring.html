@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Prediction Monitoring</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --card-bg: #ffffff;
+    --border: #dde1e6;
+    --text: #1c1f24;
+    --muted: #6b7280;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --error-bg: #fef2f2;
+    --error-text: #b91c1c;
+    --ok-bg: #ecfdf5;
+    --ok-text: #065f46;
+    --warn-bg: #fffbeb;
+    --warn-text: #92400e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 2rem 1rem;
+  }
+  .card {
+    max-width: 780px;
+    margin: 0 auto 1.5rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem;
+  }
+  h1 { font-size: 1.35rem; margin: 0 0 0.25rem; }
+  h2 { font-size: 1.05rem; margin: 0 0 0.75rem; }
+  p.subtitle { margin: 0 0 1.5rem; color: var(--muted); font-size: 0.9rem; }
+  a.nav-link { color: var(--accent); text-decoration: none; font-size: 0.85rem; }
+  a.nav-link:hover { text-decoration: underline; }
+  .controls { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+  select, button {
+    padding: 0.5rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: white;
+    color: var(--text);
+  }
+  button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:hover { background: var(--accent-hover); }
+  button.secondary { background: white; color: var(--text); border: 1px solid var(--border); }
+  button.secondary:hover { background: var(--bg); }
+  button:disabled { background: var(--muted); cursor: not-allowed; }
+  .banner {
+    padding: 0.9rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    display: none;
+    font-size: 0.9rem;
+  }
+  .banner.show { display: block; }
+  .banner.drift { background: var(--error-bg); color: var(--error-text); }
+  .banner.ok { background: var(--ok-bg); color: var(--ok-text); }
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0.5rem; }
+  .metric-box { border: 1px solid var(--border); border-radius: 8px; padding: 0.9rem; }
+  .metric-box .label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; }
+  .metric-box .mae { font-size: 1.6rem; font-weight: 700; margin-top: 0.2rem; }
+  .bar-track { background: var(--bg); border-radius: 6px; height: 10px; margin-top: 0.6rem; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 6px; }
+  .bar-fill.baseline { background: var(--accent); }
+  .bar-fill.surge { background: var(--error-text); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+  th, td { text-align: left; padding: 0.45rem 0.5rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th { color: var(--muted); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; }
+  .table-wrap { overflow-x: auto; }
+  .empty { color: var(--muted); font-size: 0.85rem; padding: 0.5rem 0; }
+</style>
+</head>
+<body>
+
+  <div class="card">
+    <a class="nav-link" href="/">&larr; Back to predictor</a>
+    <h1 style="margin-top:0.6rem;">Prediction Monitoring</h1>
+    <p class="subtitle">
+      Logs predicted-vs-actual duration for every prediction, and simulates a
+      festival/rush-hour surge to demonstrate drift detection.
+    </p>
+
+    <div class="controls">
+      <select id="model-select"></select>
+      <button id="simulate-btn">Run Drift Simulation</button>
+      <button id="refresh-btn" class="secondary">Refresh</button>
+      <button id="reset-btn" class="secondary">Reset Log</button>
+    </div>
+
+    <div id="drift-banner" class="banner"></div>
+
+    <div id="compare" class="compare" style="display:none;">
+      <div class="metric-box">
+        <div class="label">Baseline MAE</div>
+        <div class="mae" id="baseline-mae">-</div>
+        <div class="bar-track"><div class="bar-fill baseline" id="baseline-bar" style="width:0%"></div></div>
+      </div>
+      <div class="metric-box">
+        <div class="label">Festival / Rush-Hour Surge MAE</div>
+        <div class="mae" id="surge-mae">-</div>
+        <div class="bar-track"><div class="bar-fill surge" id="surge-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Recent Predictions</h2>
+    <div class="table-wrap">
+      <table id="recent-table">
+        <thead>
+          <tr>
+            <th>Logged At (UTC)</th>
+            <th>Batch</th>
+            <th>Model</th>
+            <th>Predicted (s)</th>
+            <th>Actual (s)</th>
+            <th>Abs. Error</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div id="recent-empty" class="empty" style="display:none;">No predictions logged yet.</div>
+    </div>
+  </div>
+
+<script>
+  const modelSelect = document.getElementById("model-select");
+  const simulateBtn = document.getElementById("simulate-btn");
+  const refreshBtn = document.getElementById("refresh-btn");
+  const resetBtn = document.getElementById("reset-btn");
+  const banner = document.getElementById("drift-banner");
+  const compareBox = document.getElementById("compare");
+  const recentTbody = document.querySelector("#recent-table tbody");
+  const recentEmpty = document.getElementById("recent-empty");
+
+  function fmt(n) {
+    return (n === null || n === undefined) ? "-" : Number(n).toFixed(1);
+  }
+
+  async function loadModels() {
+    try {
+      const response = await fetch("/models");
+      const data = await response.json();
+      modelSelect.innerHTML = "";
+      data.available_models.forEach((name) => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = name.replace(/_/g, " ");
+        if (name === data.default_model) option.selected = true;
+        modelSelect.appendChild(option);
+      });
+    } catch (err) {
+      modelSelect.innerHTML = '<option value="">(unable to load models)</option>';
+    }
+  }
+
+  function showBanner(driftDetected, baselineMae, surgeMae, ratio) {
+    banner.className = "banner show " + (driftDetected ? "drift" : "ok");
+    if (driftDetected) {
+      banner.textContent =
+        `Drift detected: surge MAE (${fmt(surgeMae)}s) is more than ${ratio}x baseline MAE (${fmt(baselineMae)}s).`;
+    } else {
+      banner.textContent = `No drift flagged (surge MAE ${fmt(surgeMae)}s vs baseline ${fmt(baselineMae)}s).`;
+    }
+  }
+
+  function renderCompare(baseline, surge) {
+    if (!baseline || !surge) return;
+    compareBox.style.display = "grid";
+    document.getElementById("baseline-mae").textContent = fmt(baseline.mae) + "s";
+    document.getElementById("surge-mae").textContent = fmt(surge.mae) + "s";
+    const maxMae = Math.max(baseline.mae || 0, surge.mae || 0, 1);
+    document.getElementById("baseline-bar").style.width = (100 * (baseline.mae || 0) / maxMae) + "%";
+    document.getElementById("surge-bar").style.width = (100 * (surge.mae || 0) / maxMae) + "%";
+  }
+
+  async function loadSummary() {
+    try {
+      const response = await fetch("/monitoring/summary");
+      const summary = await response.json();
+      if (summary.baseline && summary.festival_surge) {
+        renderCompare(summary.baseline, summary.festival_surge);
+      }
+    } catch (err) { /* ignore */ }
+  }
+
+  async function loadRecent() {
+    try {
+      const response = await fetch("/monitoring/recent?limit=20");
+      const rows = await response.json();
+      recentTbody.innerHTML = "";
+      if (!rows.length) {
+        recentEmpty.style.display = "block";
+        return;
+      }
+      recentEmpty.style.display = "none";
+      rows.forEach((row) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.logged_at.replace("T", " ").slice(0, 19)}</td>
+          <td>${row.batch_label}</td>
+          <td>${row.model_used}</td>
+          <td>${fmt(row.predicted_seconds)}</td>
+          <td>${fmt(row.actual_seconds)}</td>
+          <td>${fmt(row.absolute_error)}</td>
+        `;
+        recentTbody.appendChild(tr);
+      });
+    } catch (err) { /* ignore */ }
+  }
+
+  async function refreshAll() {
+    await Promise.all([loadSummary(), loadRecent()]);
+  }
+
+  simulateBtn.addEventListener("click", async () => {
+    simulateBtn.disabled = true;
+    simulateBtn.textContent = "Running...";
+    try {
+      const response = await fetch(`/monitoring/simulate-drift?model=${encodeURIComponent(modelSelect.value)}`, {
+        method: "POST",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        banner.className = "banner show drift";
+        banner.textContent = "Simulation failed: " + (data.detail || JSON.stringify(data));
+      } else {
+        renderCompare(data.baseline, data.festival_surge);
+        showBanner(data.drift_detected, data.baseline.mae, data.festival_surge.mae, data.threshold_ratio);
+      }
+      await loadRecent();
+    } finally {
+      simulateBtn.disabled = false;
+      simulateBtn.textContent = "Run Drift Simulation";
+    }
+  });
+
+  refreshBtn.addEventListener("click", refreshAll);
+
+  resetBtn.addEventListener("click", async () => {
+    await fetch("/monitoring/reset", { method: "POST" });
+    banner.className = "banner";
+    compareBox.style.display = "none";
+    await loadRecent();
+  });
+
+  loadModels();
+  refreshAll();
+</script>
+</body>
+</html>

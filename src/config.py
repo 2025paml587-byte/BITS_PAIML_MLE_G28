@@ -33,6 +33,7 @@ FEATURE_ENGINEERING_OUTPUT_DIR = PROJECT_ROOT / _paths["feature_engineering_outp
 EXTERNAL_DATA_DIR = PROJECT_ROOT / _paths["external_data_dir"]
 MODELS_DIR = PROJECT_ROOT / _paths["models_dir"]
 HIGH_TRAFFIC_ZONES_PATH = PROJECT_ROOT / _paths["high_traffic_zones"]
+MONITORING_DB_PATH = PROJECT_ROOT / _paths["monitoring_db"]
 
 # --- DVC -----------------------------------------------------------------
 DVC_REMOTE = _config["dvc"]["remote"]
@@ -60,3 +61,6 @@ SERVING_MODELS = {name: PROJECT_ROOT / path for name, path in _serving["models"]
 # every OS.
 MLFLOW_TRACKING_URI = (PROJECT_ROOT / _mlflow["tracking_uri"]).as_uri()
 MLFLOW_EXPERIMENT_NAME = _mlflow["experiment_name"]
+
+# --- Monitoring --------------------------------------------------------------
+DRIFT_MAE_RATIO_THRESHOLD = _config["monitoring"]["drift_mae_ratio_threshold"]
