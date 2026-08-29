@@ -53,5 +53,9 @@ DEFAULT_SERVING_MODEL = _serving["default_model"]
 SERVING_MODELS = {name: PROJECT_ROOT / path for name, path in _serving["models"].items()}
 
 # --- MLflow ------------------------------------------------------------------
-MLFLOW_TRACKING_URI = str(PROJECT_ROOT / _mlflow["tracking_uri"])
+# MLflow parses tracking URIs as actual URIs (scheme://...). A bare Windows
+# path like "C:\...\mlruns" gets misread as scheme "c", so this must be a
+# real file:// URI (Path.as_uri()), not a plain path string, to work on
+# every OS.
+MLFLOW_TRACKING_URI = (PROJECT_ROOT / _mlflow["tracking_uri"]).as_uri()
 MLFLOW_EXPERIMENT_NAME = _mlflow["experiment_name"]
