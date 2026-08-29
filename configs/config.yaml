@@ -13,6 +13,7 @@ paths:
   feature_engineering_output_dir: docs/feature_engg_chart_outputs
   external_data_dir: data/data_folder/external
   models_dir: models
+  high_traffic_zones: models/high_traffic_zones.json
 
 dvc:
   remote: cloud
@@ -38,7 +39,7 @@ serving:
   default_model: gradient_boosting
   models:
     gradient_boosting: models/gradient_boosting_trip_duration.joblib
-    linear_regression: data/data_folder/train/processed/duration_linear_regression.joblib
+    linear_regression: models/linear_regression_trip_duration.joblib
 
 training:
   test_size: 0.2

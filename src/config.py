@@ -32,6 +32,7 @@ EDA_OUTPUT_DIR = PROJECT_ROOT / _paths["eda_output_dir"]
 FEATURE_ENGINEERING_OUTPUT_DIR = PROJECT_ROOT / _paths["feature_engineering_output_dir"]
 EXTERNAL_DATA_DIR = PROJECT_ROOT / _paths["external_data_dir"]
 MODELS_DIR = PROJECT_ROOT / _paths["models_dir"]
+HIGH_TRAFFIC_ZONES_PATH = PROJECT_ROOT / _paths["high_traffic_zones"]
 
 # --- DVC -----------------------------------------------------------------
 DVC_REMOTE = _config["dvc"]["remote"]

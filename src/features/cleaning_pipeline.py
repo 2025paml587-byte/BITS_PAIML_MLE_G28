@@ -8,6 +8,7 @@ the result, and DVC-tracks the outputs.
 """
 
 import io
+import json
 import os
 import subprocess
 import zipfile
@@ -18,6 +19,7 @@ import pandas as pd
 from src.config import (
     EXTERNAL_DATA_DIR,
     FEATURE_ENGINEERING_OUTPUT_DIR,
+    HIGH_TRAFFIC_ZONES_PATH,
     PROJECT_ROOT,
     TEST_CLEANED_PATH,
     TEST_PROCESSED_PATH,
@@ -69,6 +71,25 @@ def write_processed_csv(
                 )
 
 
+def save_high_traffic_zones(zones: set, path: Path = HIGH_TRAFFIC_ZONES_PATH) -> None:
+    """Persist the zones set so serving can reuse the exact same
+    definition of "high traffic" the model was trained on, instead of
+    guessing at inference time (a single request has no dataset to
+    compute a frequency quantile from)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(sorted(zones), f)
+
+
+def load_high_traffic_zones(path: Path = HIGH_TRAFFIC_ZONES_PATH) -> set:
+    """Load a previously persisted zones set, or an empty set if none
+    has been saved yet."""
+    if not path.exists():
+        return set()
+    with open(path, "r") as f:
+        return set(json.load(f))
+
+
 def load_external_data(path: Path) -> pd.DataFrame | None:
     """Load an optional external CSV, returning None when it is unavailable."""
     if not path.exists():
@@ -89,6 +110,8 @@ def run_feature_cleaning(chunksize: int = 100_000) -> None:
     print("Finding high-traffic zones from EDA processed train data...")
     high_traffic_zones = find_high_traffic_zones_from_csv(TRAIN_PROCESSED_PATH, chunksize=chunksize)
     print(f"High-traffic zones identified: {len(high_traffic_zones)}")
+    save_high_traffic_zones(high_traffic_zones)
+    print(f"High-traffic zones saved to: {HIGH_TRAFFIC_ZONES_PATH}")
 
     external_data = []
     for filename in ("weather.csv", "traffic.csv"):
