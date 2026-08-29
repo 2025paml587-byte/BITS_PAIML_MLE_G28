@@ -2,6 +2,10 @@
 
 Replaces notebooks/linearRegressionmodel.py. Optionally logs the run
 (params, metrics, model) to MLflow.
+
+Trains on the cleaned/feature-engineered dataset (src.features.cleaned_features
+via src.features.cleaning_pipeline), not the older EDA-processed one -
+see src.data.load.load_processed_train_test for that schema instead.
 """
 
 from pathlib import Path
@@ -13,8 +17,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 
-from src.config import LINEAR_REGRESSION, MODELS_DIR, RANDOM_STATE, TEST_SIZE
-from src.data.load import load_processed_train_test
+from src.config import LINEAR_REGRESSION, MODELS_DIR, RANDOM_STATE, TEST_SIZE, TRAIN_CLEANED_PATH
+from src.data.load import load_cleaned_train_test
 from src.models.common import (
     build_preprocessor,
     evaluate_regression,
@@ -22,7 +26,7 @@ from src.models.common import (
     save_model,
     split_features_target,
 )
-from src.models.tracking import start_run_if_enabled
+from src.models.tracking import log_dataset_tags, start_run_if_enabled
 
 
 def train_model(
@@ -32,8 +36,8 @@ def train_model(
     tracking_uri: str | None = None,
 ) -> Pipeline:
     if train_df is None:
-        print("Loading processed training data...")
-        train_df, _ = load_processed_train_test()
+        print("Loading cleaned training data...")
+        train_df, _ = load_cleaned_train_test()
 
     X, y = split_features_target(train_df)
     if X.empty:
@@ -51,6 +55,7 @@ def train_model(
     with start_run_if_enabled("linear_regression", log_to_mlflow, tracking_uri) as run:
         if run is not None:
             mlflow.log_params({"test_size": TEST_SIZE, "random_state": RANDOM_STATE})
+            log_dataset_tags("cleaned", TRAIN_CLEANED_PATH)
 
         model.fit(X_train, y_train)
         metrics = evaluate_regression(y_test, model.predict(X_test))

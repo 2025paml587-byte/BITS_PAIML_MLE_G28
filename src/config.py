@@ -26,7 +26,11 @@ TRAIN_RAW_PATH = PROJECT_ROOT / _paths["train_raw"]
 TEST_RAW_PATH = PROJECT_ROOT / _paths["test_raw"]
 TRAIN_PROCESSED_PATH = PROJECT_ROOT / _paths["train_processed"]
 TEST_PROCESSED_PATH = PROJECT_ROOT / _paths["test_processed"]
+TRAIN_CLEANED_PATH = PROJECT_ROOT / _paths["train_cleaned"]
+TEST_CLEANED_PATH = PROJECT_ROOT / _paths["test_cleaned"]
 EDA_OUTPUT_DIR = PROJECT_ROOT / _paths["eda_output_dir"]
+FEATURE_ENGINEERING_OUTPUT_DIR = PROJECT_ROOT / _paths["feature_engineering_output_dir"]
+EXTERNAL_DATA_DIR = PROJECT_ROOT / _paths["external_data_dir"]
 MODELS_DIR = PROJECT_ROOT / _paths["models_dir"]
 
 # --- DVC -----------------------------------------------------------------

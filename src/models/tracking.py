@@ -7,10 +7,12 @@ existing pipeline behavior depends on MLflow being configured.
 
 import os
 from contextlib import contextmanager
+from pathlib import Path
 
 import mlflow
 
 from src.config import MLFLOW_EXPERIMENT_NAME, MLFLOW_TRACKING_URI
+from src.data.load import read_dvc_md5
 
 # MLflow 3.x puts the plain local filesystem store ("./mlruns") into
 # maintenance mode by default and requires opting back in. A local
@@ -37,3 +39,16 @@ def start_run_if_enabled(run_name: str, enabled: bool, tracking_uri: str | None 
     configure_mlflow(tracking_uri)
     with mlflow.start_run(run_name=run_name) as run:
         yield run
+
+
+def log_dataset_tags(feature_set: str, dataset_path: Path) -> None:
+    """Tag the active run with which feature-set and DVC-tracked data
+    version fed it, so a run, its data, and DVC stay traceable to each
+    other. No-op if there's no active run or no .dvc pointer yet."""
+    if mlflow.active_run() is None:
+        return
+    mlflow.set_tag("feature_set", feature_set)
+    mlflow.set_tag("dataset_path", str(dataset_path))
+    md5 = read_dvc_md5(dataset_path)
+    if md5 is not None:
+        mlflow.set_tag("dataset_md5", md5)
