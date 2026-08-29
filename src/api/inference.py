@@ -12,9 +12,9 @@ import pandas as pd
 
 from src.api.schemas import TripRequest
 from src.config import SERVING_MODELS
+from src.data.zone_reference import load_high_traffic_zones
 from src.features.build_features import engineer_features
 from src.features.cleaned_features import process_chunk
-from src.features.cleaning_pipeline import load_high_traffic_zones
 
 _model_cache: dict[str, object] = {}
 _high_traffic_zones_cache: set | None = None

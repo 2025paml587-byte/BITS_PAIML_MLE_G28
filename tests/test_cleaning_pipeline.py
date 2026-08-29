@@ -6,8 +6,6 @@ import pandas as pd
 from src.features.cleaning_pipeline import (
     find_high_traffic_zones_from_csv,
     load_external_data,
-    load_high_traffic_zones,
-    save_high_traffic_zones,
     write_processed_csv,
 )
 
@@ -90,17 +88,3 @@ def test_load_external_data_loads_existing_csv(tmp_path):
     pd.DataFrame({"temperature": [1, 2]}).to_csv(path, index=False)
     result = load_external_data(path)
     assert list(result["temperature"]) == [1, 2]
-
-
-def test_high_traffic_zones_roundtrip_through_json(tmp_path):
-    path = tmp_path / "high_traffic_zones.json"
-    zones = {"40.75_-73.98", "40.76_-73.97"}
-
-    save_high_traffic_zones(zones, path)
-    loaded = load_high_traffic_zones(path)
-
-    assert loaded == zones
-
-
-def test_load_high_traffic_zones_returns_empty_set_when_missing(tmp_path):
-    assert load_high_traffic_zones(tmp_path / "does_not_exist.json") == set()

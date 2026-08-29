@@ -1,0 +1,11 @@
+# Minimal dependencies to run the prediction API (src/api).
+# The full project (EDA, training, DVC, MLflow) needs requirements.txt
+# instead - none of that is required to serve the already-trained
+# models baked into a Docker image built from this file.
+fastapi
+uvicorn[standard]
+pandas>=2.0,<3
+numpy
+scikit-learn
+joblib
+PyYAML
