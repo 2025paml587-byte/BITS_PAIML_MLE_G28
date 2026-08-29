@@ -17,3 +17,6 @@ mlartifacts/
 
 # Docker Image
 trip-duration-api.tar
+
+# Documents
+SPEAKING_NOTES.md
