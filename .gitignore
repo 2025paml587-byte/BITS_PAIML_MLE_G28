@@ -18,5 +18,9 @@ mlartifacts/
 # Docker Image
 trip-duration-api.tar
 
+# Monitoring log (runtime state, not versioned) - anchored to repo
+# root so it doesn't also match src/monitoring/ (the source package).
+/monitoring/
+
 # Documents
 SPEAKING_NOTES.md

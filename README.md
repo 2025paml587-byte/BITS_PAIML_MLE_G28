@@ -20,6 +20,7 @@ This project aims to build an end-to-end Machine Learning pipeline for predictin
 - [Running the API](#running-the-api)
 - [Docker Deployment](#docker-deployment)
 - [API Endpoints](#api-endpoints)
+- [Prediction Monitoring & Drift Simulation](#prediction-monitoring--drift-simulation)
 - [Testing](#testing)
 - [MLflow Integration](#mlflow-integration)
 - [Contributing](#contributing)
@@ -185,6 +186,20 @@ dvc pull
 - **`src/models/backfill_existing_models.py`**: Register legacy models
   - Loads pre-existing joblib models into MLflow
   - Enables historical experiment comparison
+
+#### **Prediction Monitoring** (`src/monitoring/`)
+- **`src/monitoring/logging_store.py`**: SQLite-backed prediction log
+  - `log_prediction()`, `get_recent_predictions()`, `get_batch_summary()`, `clear_all()`
+  - Stores predicted vs. actual duration (actual is `NULL` for live predictions)
+
+- **`src/monitoring/replay.py`**: Replays trips with a known duration through
+  the deployed model, logging predicted vs. actual - the source of real
+  actual-vs-predicted pairs for monitoring
+
+- **`src/monitoring/drift.py`**: Simulates a festival/rush-hour surge batch
+  (synthetic trips, actual duration derived from the model's own prediction)
+  and compares its error against a normal baseline batch to flag drift
+  - See [Prediction Monitoring & Drift Simulation](#prediction-monitoring--drift-simulation)
 
 ## Project Structure:
 
@@ -355,20 +370,20 @@ curl http://127.0.0.1:8000/models
 ```
 
 ### `POST /predict`
-Predict trip duration for a given trip.
+Predict trip duration for a given trip. `algorithm` is optional and
+defaults to the configured default model.
 
 **Request Body:**
 ```json
 {
-  "pickup_datetime": "2023-01-15 14:30:00",
-  "dropoff_datetime": "2023-01-15 14:45:00",
-  "pickup_longitude": -73.97,
-  "pickup_latitude": 40.77,
-  "dropoff_longitude": -73.98,
-  "dropoff_latitude": 40.76,
+  "vendor_id": 1,
   "passenger_count": 1,
-  "vendor_id": 2,
-  "trip_type": 1,
+  "pickup_datetime": "2016-03-14T09:30:00",
+  "pickup_longitude": -73.9855,
+  "pickup_latitude": 40.7580,
+  "dropoff_longitude": -73.9654,
+  "dropoff_latitude": 40.7829,
+  "store_and_fwd_flag": "N",
   "algorithm": "gradient_boosting"
 }
 ```
@@ -376,11 +391,90 @@ Predict trip duration for a given trip.
 **Response:**
 ```json
 {
-  "predicted_trip_duration": 15.4,
-  "model_used": "gradient_boosting",
-  "unit": "minutes"
+  "predicted_trip_duration_seconds": 807.27,
+  "model_used": "gradient_boosting"
 }
 ```
+
+Every call to `/predict` is also logged for monitoring - see
+[Prediction Monitoring & Drift Simulation](#prediction-monitoring--drift-simulation) below.
+
+## Prediction Monitoring & Drift Simulation
+
+The API tracks predicted-vs-actual duration over time and can simulate a
+festival/rush-hour traffic surge to demonstrate drift detection - both
+visible live at **http://127.0.0.1:8000/monitoring** (linked from the main
+predictor page), backed by `src/monitoring/`.
+
+### Why "actual" duration has to be simulated
+
+A prediction made right now has no future ground truth to compare against
+for several minutes, so a live demo can't show real predicted-vs-actual
+pairs from `/predict` alone. Instead, `src/monitoring/replay.py` replays
+trips whose duration is *already known* through the exact same inference
+path used by `/predict`, logging predicted vs. actual for each. For the
+drift demo specifically (no real historical data pulled via DVC required),
+`src/monitoring/drift.py` generates synthetic NYC-taxi-shaped trips and
+derives their "actual" duration from the model's own prediction:
+
+- **Baseline batch**: actual = predicted &times; 1.0 + small random noise
+  (~10%) - representative of normal conditions, so a well-calibrated model
+  naturally shows low error here.
+- **Festival/rush-hour surge batch**: actual = predicted &times; 1.8 + noise,
+  with pickups biased to rush-hour windows (7-9am, 5-7pm) - representing
+  congestion the model was never trained on. The model still predicts as if
+  conditions were normal, so its error spikes.
+
+This isn't circular: the model computes a fresh prediction for each row
+exactly as it would for a real request, and that prediction is compared
+against an actual value the model never saw. Swap
+`generate_demo_inputs()`/the synthetic actuals for a real held-out sample
+(e.g. from `test_cleaned.csv`) to run the same demo against real trips
+once DVC data is available.
+
+### Storage
+
+Every logged prediction (live or replayed) is written to a small SQLite
+database at `monitoring/predictions.db` (stdlib `sqlite3`, no extra
+dependency). It's git-ignored - runtime state, not source - and can be
+cleared at any time via `POST /monitoring/reset`.
+
+### Endpoints
+
+#### `GET /monitoring/summary`
+Per-batch aggregate stats (count, average predicted, average actual, MAE).
+```bash
+curl http://127.0.0.1:8000/monitoring/summary
+```
+```json
+{
+  "baseline": {"batch_label": "baseline", "count": 30, "avg_predicted": 1408.1, "avg_actual": 1420.3, "mae": 112.2},
+  "festival_surge": {"batch_label": "festival_surge", "count": 30, "avg_predicted": 1480.5, "avg_actual": 2684.8, "mae": 1204.3},
+  "live": {"batch_label": "live", "count": 1, "avg_predicted": 807.3, "avg_actual": null, "mae": null}
+}
+```
+
+#### `GET /monitoring/recent?limit=20`
+The most recent logged predictions, newest first.
+
+#### `POST /monitoring/simulate-drift?model=gradient_boosting`
+Runs the baseline + festival-surge replay described above against the
+given model (defaults to the configured default model), logs both
+batches, and reports whether drift was flagged.
+```json
+{
+  "baseline": {"count": 30, "mae": 112.2, "...": "..."},
+  "festival_surge": {"count": 30, "mae": 1204.3, "...": "..."},
+  "drift_detected": true,
+  "threshold_ratio": 1.5
+}
+```
+`drift_detected` is `true` when the surge batch's MAE exceeds the baseline's
+MAE by more than `threshold_ratio` (configurable via
+`configs/config.yaml`'s `monitoring.drift_mae_ratio_threshold`).
+
+#### `POST /monitoring/reset`
+Clears the entire prediction log - useful before re-running the demo.
 
 ## Training Models
 

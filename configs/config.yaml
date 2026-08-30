@@ -14,6 +14,12 @@ paths:
   external_data_dir: data/data_folder/external
   models_dir: models
   high_traffic_zones: models/high_traffic_zones.json
+  monitoring_db: monitoring/predictions.db
+
+monitoring:
+  # If a simulated "surge" batch's MAE exceeds a normal batch's MAE by
+  # more than this ratio, it's flagged as drift.
+  drift_mae_ratio_threshold: 1.5
 
 dvc:
   remote: cloud

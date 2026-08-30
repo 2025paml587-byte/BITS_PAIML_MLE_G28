@@ -27,7 +27,12 @@ COPY src/ ./src/
 COPY configs/ ./configs/
 COPY models/ ./models/
 
-RUN useradd --create-home --uid 1000 appuser
+# The monitoring feature writes a SQLite log to ./monitoring/ at
+# runtime, so the app user needs write access to /app, not just
+# read access to the copied files.
+RUN useradd --create-home --uid 1000 appuser \
+    && mkdir -p /app/monitoring \
+    && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000

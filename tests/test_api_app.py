@@ -77,3 +77,54 @@ def test_predict_returns_503_when_model_file_missing(tmp_path):
         assert response.status_code == 503
     finally:
         SERVING_MODELS["gradient_boosting"] = original_path
+
+
+def test_monitoring_ui_page_is_served():
+    response = client.get("/monitoring")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "/monitoring/simulate-drift" in response.text
+
+
+def test_predict_logs_a_live_prediction(tmp_path, monkeypatch):
+    monkeypatch.setattr("src.monitoring.logging_store.MONITORING_DB_PATH", tmp_path / "predictions.db")
+
+    client.post("/predict", json=SAMPLE_TRIP)
+    response = client.get("/monitoring/recent")
+
+    assert response.status_code == 200
+    rows = response.json()
+    assert len(rows) == 1
+    assert rows[0]["batch_label"] == "live"
+    assert rows[0]["actual_seconds"] is None
+
+
+def test_monitoring_summary_empty_when_no_predictions_logged(tmp_path, monkeypatch):
+    monkeypatch.setattr("src.monitoring.logging_store.MONITORING_DB_PATH", tmp_path / "predictions.db")
+
+    response = client.get("/monitoring/summary")
+
+    assert response.status_code == 200
+    assert response.json() == {}
+
+
+def test_monitoring_simulate_drift_flags_drift(tmp_path, monkeypatch):
+    monkeypatch.setattr("src.monitoring.logging_store.MONITORING_DB_PATH", tmp_path / "predictions.db")
+
+    response = client.post("/monitoring/simulate-drift")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["baseline"]["count"] == 30
+    assert body["festival_surge"]["count"] == 30
+    assert body["drift_detected"] is True
+
+
+def test_monitoring_reset_clears_the_log(tmp_path, monkeypatch):
+    monkeypatch.setattr("src.monitoring.logging_store.MONITORING_DB_PATH", tmp_path / "predictions.db")
+
+    client.post("/predict", json=SAMPLE_TRIP)
+    client.post("/monitoring/reset")
+    response = client.get("/monitoring/recent")
+
+    assert response.json() == []
